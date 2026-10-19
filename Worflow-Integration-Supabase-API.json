@@ -1,0 +1,1446 @@
+{
+  "name": "Worflow-Integration-Supabase-API",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "ligsimworkflow",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "integrationkey",
+                "value": "34d2da52c70412d3a37e71b1c741d169fbf6fbf8497f0749c15c42a4812382cc"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2176,
+        304
+      ],
+      "id": "be376b12-aee7-47e1-93f8-5d1570d3bf5c",
+      "name": "Webhook",
+      "webhookId": "54352240-1f1d-4c58-a8e6-0a411b5d39bf"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"total\": $('Split Out').all().length } }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -400,
+        160
+      ],
+      "id": "8717ee4a-beea-4de8-a1af-903b15bbd452",
+      "name": "Respond to Webhook",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "queues",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -896,
+        160
+      ],
+      "id": "19f3d4e7-f1a1-4523-8803-ca71e61bc850",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"queues\": {{ $json.queues.map(q => { const { dr_abandon_goal, dr_ns_goal, ...rest } = q; return rest; }) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -1072,
+        160
+      ],
+      "id": "8e80ea0b-c449-4487-9273-3928e8a2c8ad",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "reportsTotal",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -896,
+        -48
+      ],
+      "id": "abb2a54c-e9ac-4f03-95fb-241f39e7144a",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data.reportsTotal",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -992,
+        -240
+      ],
+      "id": "efcb4994-0e1e-4586-a3b8-eea9f3c39266",
+      "name": "Split Out2"
+    },
+    {
+      "parameters": {
+        "url": "https://app-vta.drcall.com.br:3030/v2/report-queue",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "abandon"
+            },
+            {
+              "name": "queue",
+              "value": "FILA-EXAME"
+            },
+            {
+              "name": "init-time",
+              "value": "2026-09-01T00:00:00-03:00 "
+            },
+            {
+              "name": "final-time",
+              "value": "2026-09-29T23:59:59-03:00"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1344,
+        -240
+      ],
+      "id": "1e32ac2c-43f7-4f93-843b-014a0d56c176",
+      "name": "GET-Relatório-Filas",
+      "alwaysOutputData": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Bmw3ZamaFZjNbOBM",
+          "name": "Ligsim-API-Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://supabase.oftalmoplus.com.br/rest/v1/relatorio_filas?on_conflict=id",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $('Split Out2').all().map(i => i.json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -656,
+        -240
+      ],
+      "id": "29424bbc-dd6a-42e2-b733-fb8fcf89d700",
+      "name": "POST-Relatório-Filas",
+      "alwaysOutputData": false,
+      "executeOnce": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "zm6ZoFNdvT1LsItv",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://supabase.oftalmoplus.com.br/rest/v1/relatorio_chamadas?on_conflict=id",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $('Split Out1').all().map(i => i.json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -656,
+        -48
+      ],
+      "id": "da2862d0-903f-483d-81e7-fdc138dea133",
+      "name": "POST-Relatório-Chamadas",
+      "alwaysOutputData": false,
+      "executeOnce": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "zm6ZoFNdvT1LsItv",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://app-vta.drcall.com.br:3030/v2/reports/calldate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1344,
+        -48
+      ],
+      "id": "ca2d1663-a0d1-4dda-ae05-11001d2dab0a",
+      "name": "GET-Relatório-Chamadas",
+      "alwaysOutputData": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Bmw3ZamaFZjNbOBM",
+          "name": "Ligsim-API-Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://app-vta.drcall.com.br:3030/v2/queues",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": []
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1344,
+        160
+      ],
+      "id": "9e730d31-af73-4ef1-8ee2-8b6fbcf2778e",
+      "name": "GET-Listar-Filas",
+      "alwaysOutputData": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Bmw3ZamaFZjNbOBM",
+          "name": "Ligsim-API-Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://supabase.oftalmoplus.com.br/rest/v1/tableid?on_conflict=id",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $('Split Out').all().map(i => i.json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -656,
+        160
+      ],
+      "id": "dbc1f048-3e0b-43fe-bca2-2823a5066a20",
+      "name": "POST-Listar-Filas",
+      "alwaysOutputData": false,
+      "executeOnce": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "zm6ZoFNdvT1LsItv",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data.endpoint",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -992,
+        336
+      ],
+      "id": "d198fca9-db40-4659-9d7d-671a4b3adbac",
+      "name": "Split Out3"
+    },
+    {
+      "parameters": {
+        "url": "https://app-vta.drcall.com.br:3030/v2/sip",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1344,
+        336
+      ],
+      "id": "9a5d8300-90fc-45c2-9f9c-d3f5d065bdba",
+      "name": "GET-Listar-Ramais",
+      "alwaysOutputData": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Bmw3ZamaFZjNbOBM",
+          "name": "Ligsim-API-Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://supabase.oftalmoplus.com.br/rest/v1/listar_ramais?on_conflict=id",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $('Split Out3').all().map(i => i.json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -656,
+        336
+      ],
+      "id": "e9150288-73f3-4164-8397-85b452646e88",
+      "name": "POST-Listar-Ramais",
+      "alwaysOutputData": false,
+      "executeOnce": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "zm6ZoFNdvT1LsItv",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "agents",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -992,
+        -432
+      ],
+      "id": "5c8463a5-d086-4031-b4ca-a343e5f8b3e9",
+      "name": "Split Out7"
+    },
+    {
+      "parameters": {
+        "url": "https://app-vta.drcall.com.br:3030/v2/callcenter/agents",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "current_page",
+              "value": "1"
+            },
+            {
+              "name": "per_page",
+              "value": "25"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "integrationkey",
+              "value": "34d2da52c70412d3a37e71b1c741d169fbf6fbf8497f0749c15c42a4812382cc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1344,
+        -432
+      ],
+      "id": "c04d0061-037f-4586-a544-d87a3aa8c841",
+      "name": "GET-Listar-Agentes",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://supabase.oftalmoplus.com.br/rest/v1/listar_agentes?on_conflict=id",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $('Split Out7').all().map(i => i.json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -656,
+        -432
+      ],
+      "id": "cd252b5f-4c94-425e-8207-68e3f36d7f12",
+      "name": "POST-Listar-Agentes",
+      "alwaysOutputData": false,
+      "executeOnce": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "zm6ZoFNdvT1LsItv",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "reportsTotal",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -992,
+        512
+      ],
+      "id": "1559cbc8-cd6e-4d13-bcd0-98f4c7ed4ad3",
+      "name": "Split Out6"
+    },
+    {
+      "parameters": {
+        "url": "https://app-vta.drcall.com.br:3030/v2/callcenter/agent-call-history",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "start_date",
+              "value": "2026-08-10"
+            },
+            {
+              "name": "end_date",
+              "value": "2026-9-12"
+            },
+            {
+              "name": "id",
+              "value": "489"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "integrationkey",
+              "value": "34d2da52c70412d3a37e71b1c741d169fbf6fbf8497f0749c15c42a4812382cc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1344,
+        512
+      ],
+      "id": "a0cafc9b-11a8-4c15-bde5-0043c4c49282",
+      "name": "GET-Historico-Chamadas-Agente",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://supabase.oftalmoplus.com.br/rest/v1/estatisticas_agente?on_conflict=id",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $('Split Out6').all().map(i => i.json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -656,
+        512
+      ],
+      "id": "e66c2bb3-535d-4dca-95ec-5ea4fd051f15",
+      "name": "POST-Historico-Chamadas-Agente",
+      "alwaysOutputData": false,
+      "executeOnce": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "zm6ZoFNdvT1LsItv",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "agents_report",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -992,
+        720
+      ],
+      "id": "0bfb8aad-dbd6-410e-b444-7cfd3b71aea2",
+      "name": "Split Out8"
+    },
+    {
+      "parameters": {
+        "url": "https://app-vta.drcall.com.br:3030/v2/callcenter/agent-consolidated-report",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "start_date",
+              "value": "2026-07-01"
+            },
+            {
+              "name": "end_date",
+              "value": "2026-07-31"
+            },
+            {
+              "name": "queuename",
+              "value": "FILA-EXAME"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "integrationkey",
+              "value": "34d2da52c70412d3a37e71b1c741d169fbf6fbf8497f0749c15c42a4812382cc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1344,
+        720
+      ],
+      "id": "2c89a69f-526f-4913-a301-75a0281b69b9",
+      "name": "GET-Relatorio-Consolidado-Agente",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://supabase.oftalmoplus.com.br/rest/v1/rel_consolidado_agentes?on_conflict=id",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $('Split Out8').all().map(i => i.json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -656,
+        720
+      ],
+      "id": "4681c542-847b-402a-9613-fca78faef3f0",
+      "name": "POST-Relatorio-Consolidado-Agente",
+      "alwaysOutputData": false,
+      "executeOnce": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "zm6ZoFNdvT1LsItv",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "report",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -992,
+        928
+      ],
+      "id": "969784fa-6f78-42f7-a267-ee8b6bd7d0dd",
+      "name": "Split Out9"
+    },
+    {
+      "parameters": {
+        "url": "https://app-vta.drcall.com.br:3030/v2/callcenter/geral-agent-report",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "current_page",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "integrationkey",
+              "value": "34d2da52c70412d3a37e71b1c741d169fbf6fbf8497f0749c15c42a4812382cc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1344,
+        928
+      ],
+      "id": "99d4f56c-c80e-4242-aa9f-918a50f1c98c",
+      "name": "GET-Relatorio-Geral-Agentes",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://supabase.oftalmoplus.com.br/rest/v1/relatorio_geral_agentes?on_conflict=id",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $('Split Out9').all().map(i => i.json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -656,
+        928
+      ],
+      "id": "6aa1f343-5857-4e90-9ebe-a7f18dcf1bf3",
+      "name": "POST-Relatorio-Geral-Agentes",
+      "alwaysOutputData": false,
+      "executeOnce": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "zm6ZoFNdvT1LsItv",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"total\": $('Split Out1').all().length } }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -416,
+        -48
+      ],
+      "id": "dedad6c7-4843-47dc-b7d8-644e2b8e0c01",
+      "name": "Respond to Webhook1",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"total\": $('Split Out2').all().length } }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -416,
+        -240
+      ],
+      "id": "5d1158fc-a637-4bc7-86c8-a67654fb7dd2",
+      "name": "Respond to Webhook2",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"total\": $('Split Out3').all().length } }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -400,
+        336
+      ],
+      "id": "f3d8e1bb-4bb8-45ea-bfcb-02fbcec341aa",
+      "name": "Respond to Webhook3",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"total\": $('Split Out7').all().length } }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -416,
+        -432
+      ],
+      "id": "d58d642f-66cb-4158-b990-1e70ac8a9bc7",
+      "name": "Respond to Webhook7",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"total\": $('Split Out9').all().length } }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -400,
+        928
+      ],
+      "id": "913c1377-eb84-4691-9ebe-8fd726bd55a6",
+      "name": "Respond to Webhook9",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"total\": $('Split Out6').all().length } }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -400,
+        512
+      ],
+      "id": "402c1d68-3b08-4142-8821-5a046a6d97ff",
+      "name": "Respond to Webhook6",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"total\": $('Split Out8').all().length } }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -400,
+        720
+      ],
+      "id": "f1f0eadd-6d5d-4c03-a9c2-25e8b2fd7be1",
+      "name": "Respond to Webhook8",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const reports = $input.first().json.data.reportsTotal;\n\nconst cleaned = reports.map(({ record_path, additional_recordings, uniqueid, ...rest }) => rest);\n\nreturn [{ json: { reportsTotal: cleaned } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1072,
+        -48
+      ],
+      "id": "662e7ac8-b315-4aa7-8c3d-5686a2e83ce5",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "=0 7-21/2 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -2176,
+        0
+      ],
+      "id": "f92f3d46-cc5f-4bd5-90d0-fd8154d301e0",
+      "name": "Atualização das tabelas a cada 2h"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "GET-Listar-Agentes",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET-Relatório-Filas",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET-Listar-Filas",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET-Listar-Ramais",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET-Historico-Chamadas-Agente",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET-Relatorio-Consolidado-Agente",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET-Relatorio-Geral-Agentes",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET-Relatório-Chamadas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "POST-Listar-Filas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "POST-Relatório-Chamadas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out2": {
+      "main": [
+        [
+          {
+            "node": "POST-Relatório-Filas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET-Relatório-Filas": {
+      "main": [
+        [
+          {
+            "node": "Split Out2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST-Relatório-Filas": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST-Relatório-Chamadas": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET-Relatório-Chamadas": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET-Listar-Filas": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST-Listar-Filas": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out3": {
+      "main": [
+        [
+          {
+            "node": "POST-Listar-Ramais",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET-Listar-Ramais": {
+      "main": [
+        [
+          {
+            "node": "Split Out3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST-Listar-Ramais": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out7": {
+      "main": [
+        [
+          {
+            "node": "POST-Listar-Agentes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET-Listar-Agentes": {
+      "main": [
+        [
+          {
+            "node": "Split Out7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST-Listar-Agentes": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out6": {
+      "main": [
+        [
+          {
+            "node": "POST-Historico-Chamadas-Agente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET-Historico-Chamadas-Agente": {
+      "main": [
+        [
+          {
+            "node": "Split Out6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST-Historico-Chamadas-Agente": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out8": {
+      "main": [
+        [
+          {
+            "node": "POST-Relatorio-Consolidado-Agente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET-Relatorio-Consolidado-Agente": {
+      "main": [
+        [
+          {
+            "node": "Split Out8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST-Relatorio-Consolidado-Agente": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out9": {
+      "main": [
+        [
+          {
+            "node": "POST-Relatorio-Geral-Agentes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET-Relatorio-Geral-Agentes": {
+      "main": [
+        [
+          {
+            "node": "Split Out9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST-Relatorio-Geral-Agentes": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualização das tabelas a cada 2h": {
+      "main": [
+        [
+          {
+            "node": "GET-Listar-Agentes",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET-Relatório-Filas",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET-Relatório-Chamadas",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET-Listar-Filas",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET-Listar-Ramais",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET-Historico-Chamadas-Agente",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET-Relatorio-Consolidado-Agente",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET-Relatorio-Geral-Agentes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "timezone": "America/Sao_Paulo"
+  },
+  "versionId": "df8f1a3f-4fb1-49a0-bf64-9f472788e390",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "107c3613b48e738d86c307520e50c916f247441471b233d8e64057d0994bcfbf"
+  },
+  "nodeGroups": [],
+  "id": "f59yUKXkFOw1IByw",
+  "tags": []
+}
